@@ -4,5 +4,5 @@ pub fn is_branch_and_branch_exchange(opcode: u32) -> bool {
 
     let extracted_format = opcode & FORMAT_MASK;
 
-    return extracted_format == BRANCH_AND_EXCHANGE_FORMAT;
+    extracted_format == BRANCH_AND_EXCHANGE_FORMAT
 }
