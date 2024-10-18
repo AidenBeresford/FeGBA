@@ -1,3 +1,3 @@
 pub mod bus;
 pub mod cpu;
-mod dissassembler;
+pub mod dissassembler;
