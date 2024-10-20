@@ -6,3 +6,10 @@ pub fn is_branch_and_branch_exchange(opcode: u32) -> bool {
 
     extracted_format == BRANCH_AND_EXCHANGE_FORMAT
 }
+
+pub fn is_single_data_transfer(opcode: u32) -> bool {
+    const FORMAT_MASK: u32 = 0b1110_0000_0000_0000_0000_0000_0000_0000;
+    const SINGLE_DATA_TRANSFER_PATTERN: u32 = 0b0100_0000_0000_0000_0000_0000_0000_0000;
+
+    (opcode & FORMAT_MASK) == SINGLE_DATA_TRANSFER_PATTERN
+}
