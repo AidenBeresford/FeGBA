@@ -1,9 +1,9 @@
-enum InstructionSet {
-    ARM(opcode),
-    THUMB(opcode)
+pub enum InstructionSet {
+    ARM(u32),
+    THUMB(u32)
 }
 
-enum Instruction {
+pub enum Instruction {
     BranchAndBranchExchange,
     BlockDataTransfer,
     BranchAndBranchWithLink,
@@ -37,19 +37,19 @@ enum Instruction {
 }
 
 pub fn disassemble(inset: InstructionSet) -> Instruction {
-    match {
-        InstructionSet::ARM(op) => return disassemble_arm(op),
-        InstructionSet::THUMB(op) => return disassemble_thumb(op),
+    match inset {
+        InstructionSet::ARM(op) => {return disassemble_arm(op);},
+        InstructionSet::THUMB(op) => {return disassemble_thumb(op);},
     }
 }
 
 // TODO
-fn disassemble_arm() -> Instruction {
+fn disassemble_arm(opcode: u32) -> Instruction {
     Instruction::SoftwareInterruptA // placeholder
 }
 
 // TODO
-fn disassemble_thumb() -> Instruction {
+fn disassemble_thumb(opcode: u32) -> Instruction {
     Instruction::SoftwareInterruptT // placeholder
 }
 
