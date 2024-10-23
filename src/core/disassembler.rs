@@ -1,10 +1,63 @@
-pub fn is_branch_and_branch_exchange(opcode: u32) -> bool {
-    const BRANCH_AND_EXCHANGE_FORMAT: u32 = 0b0000_0001_0010_1111_1111_1111_0001_0000;
-    const FORMAT_MASK: u32 = 0b0000_1111_1111_1111_1111_1111_1111_0000;
+pub enum InstructionSet {
+    ARM(u32),
+    THUMB(u32)
+}
 
-    let extracted_format = opcode & FORMAT_MASK;
+pub enum Instruction {
+    BranchAndBranchExchange,
+    BlockDataTransfer,
+    BranchAndBranchWithLink,
+    SoftwareInterruptA,
+    Undefined,
+    SingleDataTransfer,
+    SingleDataSwap,
+    MultiplyAndMultiplyLong,
+    HalfwordDataTransfer,
+    PSRTransfer,
+    DataProcessing, // END OF ARM
+    SoftwareInterruptT,
+    UncoditionalBranch,
+    ConditionalBranch,
+    MultipleLoadStore,
+    LongBranchWithLink,
+    AddOffsetToSP,
+    PushPopRegister,
+    LoadStoreHalfword,
+    SPRelativeLoadStore,
+    LoadAddress,
+    LoadStoreImmediateOffset,
+    LoadStoreRegisterOffset,
+    LoadStoreSignExtended,
+    PCRelativeLoad,
+    HiRegisterOperation,
+    ALUOperation,
+    MoveCompareAddSubImmediate,
+    AddSubtract,
+    MoveShiftedRegister
+}
 
-    extracted_format == BRANCH_AND_EXCHANGE_FORMAT
+pub fn disassemble(inset: InstructionSet) -> Instruction {
+    match inset {
+        InstructionSet::ARM(op) => {return disassemble_arm(op);},
+        InstructionSet::THUMB(op) => {return disassemble_thumb(op);},
+    }
+}
+
+// TODO
+fn disassemble_arm(opcode: u32) -> Instruction {
+    Instruction::SoftwareInterruptA // placeholder
+}
+
+// TODO
+fn disassemble_thumb(opcode: u32) -> Instruction {
+    Instruction::SoftwareInterruptT // placeholder
+}
+
+fn arm_branch_and_branch_exchange(opcode: u32) -> bool {
+    let format: u32 = 0b0000_0001_0010_1111_1111_1111_0001_0000;
+    let mask: u32 = 0b0000_1111_1111_1111_1111_1111_1111_0000;
+    
+    (opcode & mask) == format
 }
 
 fn arm_block_data_transfer(opcode: u32) -> bool {
@@ -14,59 +67,73 @@ fn arm_block_data_transfer(opcode: u32) -> bool {
     (opcode & mask) == format
 }
 
+fn arm_branch_and_branch_with_link(opcode: u32) -> bool {
+    let format: u32 = 0b0000_1010_0000_0000_0000_0000_0000_0000;
+    let link: u32 = 0b0000_1011_0000_0000_0000_0000_0000_0000;
+    let mask: u32 = 0b0000_1111_0000_0000_0000_0000_0000_0000;
+
+    (opcode & mask) == format || (opcode & mask) == link 
+}
+
+fn arm_software_interrupt(opcode: u32) -> bool {
+    let format: u32 = 0b0000_1111_0000_0000_0000_0000_0000_0000;
+    let mask: u32 = 0b0000_1111_0000_0000_0000_0000_0000_0000;
+
+    (opcode & mask) == format
+}
+
+fn arm_undefined(opcode: u32) -> bool {
+    let format: u32 = 0b0000_0110_0000_0000_0000_0000_0001_0000;
+    let mask: u32 = 0b0000_1110_0000_0000_0000_0000_0001_0000;
+  
+    (opcode & mask) == format
+} 
+
 fn arm_single_data_transfer(opcode: u32) -> bool {
     let format: u32 = 0b0000_0100_0000_0000_0000_0000_0000_0000;
     let mask: u32 = 0b0000_1100_0000_0000_0000_0000_0000_0000;
-
     (opcode & mask) == format
 }
-
+  
 fn arm_single_data_swap(opcode: u32) -> bool {
     let format: u32 = 0b0000_0001_0000_0000_0000_0000_1001_0000;
     let mask: u32 = 0b0000_1111_1000_0000_0000_1111_1111_0000;
-
     (opcode & mask) == format
 }
-
+  
 fn arm_multiply_and_multiply_long(opcode: u32) -> bool {
     let multiply_format: u32 = 0b0000_0000_0000_0000_0000_0000_1001_0000;
     let multiply_long_format: u32 = 0b0000_0000_1000_0000_0000_0000_1001_0000;
     let mask: u32 = 0b0000_1111_1000_0000_0000_0000_1111_0000;
-
     (opcode & mask) == multiply_format || (opcode & mask) == multiply_long_format 
 }
-
+  
 fn arm_halfword_data_transfer_register(opcode: u32) -> bool {
     let format: u32 = 0b0000_0000_0000_0000_0000_0000_1001_0000;
     let mask: u32 = 0b0000_1110_0100_0000_0000_1111_1001_0000;
-
     (opcode & mask) == format
 }
-
+  
 fn arm_halfword_data_transfer_immediate(opcode: u32) -> bool {
     let format: u32 = 0b0000_0000_0100_0000_0000_0000_1001_0000;
     let mask: u32 = 0b0000_1110_0100_0000_0000_0000_1001_0000;
-
     (opcode & mask) == format
 }
-
+  
 fn arm_psr_transfer_mrs(opcode: u32) -> bool {
     let format: u32 = 0b0000_0001_0000_1111_0000_0000_0000_0000;
     let mask: u32 = 0b0000_1111_1011_1111_0000_0000_0000_0000;
-
     (opcode & mask) == format
 }
-
+  
 fn arm_psr_transfer_msr(opcode: u32) -> bool {
     let format: u32 = 0b0000_0001_0010_0000_1111_0000_0000_0000;
     let mask: u32 = 0b0000_1101_1011_0000_1111_0000_0000_0000;
-
     (opcode & mask) == format
 }
-
+  
 fn arm_data_processing(opcode: u32) -> bool {
     let format: u32 = 0b0000_0000_0000_0000_0000_0000_0000_0000;
     let mask: u32 = 0b0000_1100_0000_0000_0000_0000_0000_0000;
-
     (opcode & mask) == format
 }
