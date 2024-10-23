@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "FeGBA"
+name = "fegba"
 version = "0.1.0"
