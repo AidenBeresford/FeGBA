@@ -83,7 +83,6 @@ fn disassemble_arm(opcode: u32) -> Instruction {
     }
 }
 
-// TODO
 fn disassemble_thumb(opcode: u16) -> Instruction {
     if thumb_software_interrupt(opcode) {
         return Instruction::SoftwareInterruptT;
