@@ -1,6 +1,6 @@
 pub enum InstructionSet {
     ARM(u32),
-    THUMB(u32),
+    THUMB(u16),
 }
 
 pub enum Instruction {
@@ -18,7 +18,7 @@ pub enum Instruction {
     PSRTransferMSR,
     DataProcessing, // END OF ARM
     SoftwareInterruptT,
-    UncoditionalBranch,
+    UnconditionalBranch,
     ConditionalBranch,
     MultipleLoadStore,
     LongBranchWithLink,
@@ -32,10 +32,11 @@ pub enum Instruction {
     LoadStoreSignExtended,
     PCRelativeLoad,
     HiRegisterOperation,
-    ALUOperation,
+    ALUOperations,
     MoveCompareAddSubImmediate,
     AddSubtract,
-    MoveShiftedRegister,
+    MoveShiftedRegister, // END OF THUMB
+    NoOperation,
 }
 
 pub fn disassemble(inset: InstructionSet) -> Instruction {
@@ -75,14 +76,56 @@ fn disassemble_arm(opcode: u32) -> Instruction {
         return Instruction::PSRTransferMRS;
     } else if arm_psr_transfer_msr(opcode) {
         return Instruction::PSRTransferMSR;
-    } else arm_data_processing(opcode) {
+    } else if arm_data_processing(opcode) {
         return Instruction::DataProcessing;
+    } else {
+        return Instruction::NoOperation;
     }
 }
 
 // TODO
-fn disassemble_thumb(opcode: u32) -> Instruction {
-    Instruction::SoftwareInterruptT // placeholder
+fn disassemble_thumb(opcode: u16) -> Instruction {
+    if thumb_software_interrupt(opcode) {
+        return Instruction::SoftwareInterruptT;
+    } else if thumb_unconditional_branch(opcode) {
+        return Instruction::UnconditionalBranch;
+    } else if thumb_conditional_branch(opcode) {
+        return Instruction::ConditionalBranch;
+    } else if thumb_multiple_load_store(opcode) {
+        return Instruction::MultipleLoadStore;
+    } else if thumb_long_branch_with_link(opcode) {
+        return Instruction::LongBranchWithLink;
+    } else if thumb_add_offset_to_stack_pointer(opcode) {
+        return Instruction::AddOffsetToSP;
+    } else if thumb_push_pop_registers(opcode) {
+        return Instruction::PushPopRegister;
+    } else if thumb_load_store_halfword(opcode) {
+        return Instruction::LoadStoreHalfword;
+    } else if thumb_sp_relative_load_store(opcode) {
+        return Instruction::SPRelativeLoadStore;
+    } else if thumb_load_address(opcode) {
+        return Instruction::LoadAddress;
+    } else if thumb_load_store_immediate_offset(opcode) {
+        return Instruction::LoadStoreImmediateOffset;
+    } else if thumb_load_store_register_offset(opcode) {
+        return Instruction::LoadStoreRegisterOffset;
+    } else if thumb_load_store_sign_extended(opcode) {
+        return Instruction::LoadStoreSignExtended;
+    } else if thumb_pc_relative_load(opcode) {
+        return Instruction::PCRelativeLoad;
+    } else if thumb_hi_register_operation(opcode) {
+        return Instruction::HiRegisterOperation;
+    } else if thumb_alu_operations(opcode) {
+        return Instruction::ALUOperations;
+    } else if thumb_move_compare_add_sub_immediate(opcode) {
+        return Instruction::MoveCompareAddSubImmediate;
+    } else if thumb_add_subtract(opcode) {
+        return Instruction::AddSubtract;
+    } else if thumb_move_shifted_register(opcode) {
+        return Instruction::MoveShiftedRegister;
+    } else {
+        return Instruction::NoOperation;
+    }
 }
 
 fn arm_branch_and_branch_exchange(opcode: u32) -> bool {
@@ -310,3 +353,4 @@ fn thumb_move_shifted_register(opcode: u16) -> bool {
     
     (opcode & mask) == format
 }
+
