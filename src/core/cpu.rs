@@ -54,10 +54,10 @@ impl ARM7TDMI {
 
     fn pass_condition(&self, opcode: u32) -> bool {
         let condition = opcode & CONDITION_MASK;
-        let n = get_flag(self.register[16], Flag::N);
-        let z = get_flag(self.register[16], Flag::Z);
-        let c = get_flag(self.register[16], Flag::C);
-        let v = get_flag(self.register[16], Flag::V);
+        let n = self.get_flag(self.register[16], Flag::N);
+        let z = self.get_flag(self.register[16], Flag::Z);
+        let c = self.get_flag(self.register[16], Flag::C);
+        let v = self.get_flag(self.register[16], Flag::V);
     
         match condition {
             condition_codes::EQ => z,
