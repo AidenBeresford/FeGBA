@@ -99,11 +99,3 @@ impl Flag {
         }
     }
 }
-
-/// TODO: cpsr hould be replaced with the actual instance vairable 
-
-
-/// TODO: cpsr should be replaced with the actual instance vairable 
-
-
-/// TODO: cpsr should be replaced with the actual instance vairable 
