@@ -1,5 +1,8 @@
 use crate::core::bus::Memory;
 use crate::core::bus::BusAccess;
+use crate::constants::flag_masks;
+use crate::constants::CONDITION_MASK;
+use crate::constants::condition_codes;
 
 pub struct ARM7TDMI {
     rlow: [u32; 8], // first 8 registers; accessible by THUMB
@@ -52,4 +55,82 @@ impl ARM7TDMI {
     pub fn rreg(&self, reg: usize) -> u32 {
         self.rlow[reg]
     }
+}
+
+enum Flag {
+    N,
+    Z,
+    C,
+    V,
+    Q
+}
+
+impl Flag {
+    fn get_mask(&self) -> u32 {
+        match self {
+            Flag::N => flag_masks::N,
+            Flag::Z => flag_masks::Z,
+            Flag::C => flag_masks::C,
+            Flag::V => flag_masks::V,
+            Flag::Q => flag_masks::Q,
+        }
+    }
+}
+
+/// TODO: cpsr hould be replaced with the actual instance vairable 
+fn set_flag(cpsr: &mut u32, flag: Flag, bit: bool) {
+    let mask = flag.get_mask();
+    if bit == true {
+        *cpsr |= mask;
+    } else {
+        *cpsr &= !mask;
+    }
+}
+
+/// TODO: cpsr should be replaced with the actual instance vairable 
+fn get_flag(cpsr: u32, flag: Flag) -> bool {
+    let mask = flag.get_mask();
+    (cpsr & mask) != 0
+}
+
+/// TODO: cpsr should be replaced with the actual instance vairable 
+fn pass_condition(opcode: u32, cpsr: u32) -> bool {
+    let condition = opcode & CONDITION_MASK;
+    let n = get_flag(cpsr, Flag::N);
+    let z = get_flag(cpsr, Flag::Z);
+    let c = get_flag(cpsr, Flag::C);
+    let v = get_flag(cpsr, Flag::V);
+
+    if condition == condition_codes::EQ {
+        return z;
+    } else if condition == condition_codes::NQ {
+        return !z;
+    } else if condition == condition_codes::CS_HS {
+        return c;
+    } else if condition == condition_codes::CC_LO {
+        return !c;
+    } else if condition ==  condition_codes::MI {
+        return n;
+    } else if condition ==  condition_codes::PL {
+        return !n;
+    } else if condition == condition_codes::VS {
+        return v;
+    } else if condition == condition_codes::VC {
+        return !v;
+    } else if condition == condition_codes::HI {
+        return c && !z;
+    } else if condition == condition_codes::LS {
+        return !c && z;
+    } else if condition == condition_codes::GE {
+        return n == v;
+    } else if condition == condition_codes::LT {
+        return n != v;
+    } else if condition == condition_codes::GT {
+        return !z && (n == v);
+    } else if condition == condition_codes::LE {
+        return z && (n != v);
+    } else if condition == condition_codes::AL {
+        return true;
+    }
+    return false;
 }
