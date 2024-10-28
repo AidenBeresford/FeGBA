@@ -101,36 +101,22 @@ fn pass_condition(opcode: u32, cpsr: u32) -> bool {
     let c = get_flag(cpsr, Flag::C);
     let v = get_flag(cpsr, Flag::V);
 
-    if condition == condition_codes::EQ {
-        return z;
-    } else if condition == condition_codes::NQ {
-        return !z;
-    } else if condition == condition_codes::CS_HS {
-        return c;
-    } else if condition == condition_codes::CC_LO {
-        return !c;
-    } else if condition ==  condition_codes::MI {
-        return n;
-    } else if condition ==  condition_codes::PL {
-        return !n;
-    } else if condition == condition_codes::VS {
-        return v;
-    } else if condition == condition_codes::VC {
-        return !v;
-    } else if condition == condition_codes::HI {
-        return c && !z;
-    } else if condition == condition_codes::LS {
-        return !c && z;
-    } else if condition == condition_codes::GE {
-        return n == v;
-    } else if condition == condition_codes::LT {
-        return n != v;
-    } else if condition == condition_codes::GT {
-        return !z && (n == v);
-    } else if condition == condition_codes::LE {
-        return z && (n != v);
-    } else if condition == condition_codes::AL {
-        return true;
+    match condition {
+        condition_codes::EQ => z,
+        condition_codes::NQ => !z,
+        condition_codes::CS_HS => c,
+        condition_codes::CC_LO => !c,
+        condition_codes::MI => n,
+        condition_codes::PL => !n,
+        condition_codes::VS => v,
+        condition_codes::VC => !v,
+        condition_codes::HI => c && !z,
+        condition_codes::LS => !c && z,
+        condition_codes::GE => n == v,
+        condition_codes::LT => n != v,
+        condition_codes::GT => !z && (n == v),
+        condition_codes::LE => z && (n != v),
+        condition_codes::AL => true,
+        _ => false,
     }
-    return false;
 }
