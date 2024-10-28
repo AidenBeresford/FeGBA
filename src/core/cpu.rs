@@ -2,54 +2,32 @@ use crate::core::bus::Memory;
 use crate::core::bus::BusAccess;
 
 pub struct ARM7TDMI {
-    rlow: [u32; 8], // first 8 registers; accessible by THUMB
-    pub r08: [u32; 2], // these arrays are for banking registers
-    r09: [u32; 2],
-    r10: [u32; 2],
-    r11: [u32; 2],
-    r12: [u32; 2],
-    sp: [u32; 6],
-    lr: [u32; 6],
-    pc: u32,
-    cpsr: u32,
-    spsr: [u32; 5], // if anyone is willing to help cull these down please be my guest
+    // register indexes are as follows
+    // low regs are 0-7
+    // high regs user/system are 8-16
+    // r13_irq, r14_irq, and spsr_irq are 17, 18, and 19
+    // fiq registers are 20-26, spsr_irq is 27
+    // r13_svc, r14_svc, and spsr_svc are 28, 29, and 30
+    // r13_abt, r14_abt, and spsr_abt are 31, 32, and 33
+    // r13_und, r14_und, and r15_und are 34, 35, and 36
+    register: [u32; 37],
+    mode_register: [usize; 17], // this array is of indexes for register
 }
 
 impl Default for ARM7TDMI {
     fn default() -> ARM7TDMI {
-        ARM7TDMI {
-            rlow: [0; 8],
-            r08: [0; 2],
-            r09: [0; 2],
-            r10: [0; 2],
-            r11: [0; 2],
-            r12: [0; 2],
-            sp: [0x0300_7F00, 0x0300_7FA0, 0, 0, 0, 0x0300_7FE0],
-            lr: [0; 6],
-            pc: 0x0800_0000,
-            cpsr: 0b0000_0000_0000_0000_0000_0000_0001_0011,
-            spsr: [0; 5],
-        }
-    }
-}
+        let mut cpu = ARM7TDMI { 
+            register: [0; 37],
+            mode_register: [0, 1, 2, 3, 4, 5, 6, 7,
+            8, 9, 10, 11, 12, 13, 14, 15, 16],
+        };
 
-impl BusAccess for ARM7TDMI {
-    fn lbyte(&mut self, memory: &Memory, addr: usize) {
-        self.r08[0] = memory.rbyte(addr) as u32;
-    }
+        cpu.register[13] = 0x0300_7F00;
+        cpu.register[15] = 0x0800_0000;
+        cpu.register[16] = 0b0000_0000_0000_0000_0000_0000_0001_0011;
+        cpu.register[17] = 0x0300_7FA0;
+        cpu.register[34] = 0x0300_7FE0;
 
-    fn sbyte(&self, memory: &mut Memory, addr: usize) {
-        memory.wbyte(addr, self.r08[0] as u8)
-    }
-
-}
-
-impl ARM7TDMI {
-    pub fn wreg(&mut self, reg: usize, data: u32) {
-        self.rlow[reg] = data;
-    }
-    
-    pub fn rreg(&self, reg: usize) -> u32 {
-        self.rlow[reg]
+        cpu
     }
 }
