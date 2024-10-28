@@ -1,5 +1,8 @@
 use crate::core::bus::Memory;
 use crate::core::bus::BusAccess;
+use crate::constants::flag_masks;
+use crate::constants::CONDITION_MASK;
+use crate::constants::condition_codes;
 
 pub struct ARM7TDMI {
     rlow: [u32; 8], // first 8 registers; accessible by THUMB
@@ -54,14 +57,14 @@ impl ARM7TDMI {
     }
 }
 
-fn BIC(opcode:u32){
+fn BIC(opcode:u32 {
     let cond:u32 = (0xF0000000 & opcode) >> 28;
     let shifter_operand:u32 = 0b0000_0000_0000_0000_0000_1111_1111_1111 & opcode;
     let s:u32 = (0x100000 & opcode) >> 20;
     let Rn:u32 = (0xF0000 & opcode) >> 16;
     let Rd:u32 = (0xF000 & opcode) >> 12;
 
-    if condition_passed(cond){//I dont know if 0b1111 is pass/fail
+    if condition_passed(cond) {//I dont know if 0b1111 is pass/fail
         Rd = Rn & (!shifter_operand)
         if(s==1) and (Rd == 0b1111){ //should be register 15
             cpsr = spsr
@@ -77,7 +80,69 @@ fn BIC(opcode:u32){
             cpsr[29] = shifter_carry_out
             //V_Flag unaffected 
         }
-
     }
+}
 
+enum Flag {
+    N,
+    Z,
+    C,
+    V,
+    Q
+}
+
+impl Flag {
+    fn get_mask(&self) -> u32 {
+        match self {
+            Flag::N => flag_masks::N,
+            Flag::Z => flag_masks::Z,
+            Flag::C => flag_masks::C,
+            Flag::V => flag_masks::V,
+            Flag::Q => flag_masks::Q,
+        }
+    }
+}
+
+/// TODO: cpsr hould be replaced with the actual instance vairable 
+fn set_flag(cpsr: &mut u32, flag: Flag, bit: bool) {
+    let mask = flag.get_mask();
+    if bit == true {
+        *cpsr |= mask;
+    } else {
+        *cpsr &= !mask;
+    }
+}
+
+/// TODO: cpsr should be replaced with the actual instance vairable 
+fn get_flag(cpsr: u32, flag: Flag) -> bool {
+    let mask = flag.get_mask();
+    (cpsr & mask) != 0
+}
+
+/// TODO: cpsr should be replaced with the actual instance vairable 
+fn pass_condition(opcode: u32, cpsr: u32) -> bool {
+    let condition = opcode & CONDITION_MASK;
+    let n = get_flag(cpsr, Flag::N);
+    let z = get_flag(cpsr, Flag::Z);
+    let c = get_flag(cpsr, Flag::C);
+    let v = get_flag(cpsr, Flag::V);
+
+    match condition {
+        condition_codes::EQ => z,
+        condition_codes::NQ => !z,
+        condition_codes::CS_HS => c,
+        condition_codes::CC_LO => !c,
+        condition_codes::MI => n,
+        condition_codes::PL => !n,
+        condition_codes::VS => v,
+        condition_codes::VC => !v,
+        condition_codes::HI => c && !z,
+        condition_codes::LS => !c && z,
+        condition_codes::GE => n == v,
+        condition_codes::LT => n != v,
+        condition_codes::GT => !z && (n == v),
+        condition_codes::LE => z && (n != v),
+        condition_codes::AL => true,
+        _ => false,
+    }
 }
