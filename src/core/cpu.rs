@@ -41,15 +41,15 @@ impl ARM7TDMI {
     fn set_flag(&mut self, flag: Flag, bit: bool) {
         let mask = flag.get_mask();
         if bit == true {
-            self.register[16] |= mask;
+            self.register[register_index::CPSR] |= mask;
         } else {
-            self.register[16] &= !mask;
+            self.register[register_index::CPSR] &= !mask;
         }
     }
 
     fn get_flag(&self, flag: Flag) -> bool {
         let mask = flag.get_mask();
-        (self.register[16] & mask) != 0
+        (self.register[register_index::CPSR] & mask) != 0
     }
 
     fn pass_condition(&self, opcode: u32) -> bool {
@@ -76,6 +76,23 @@ impl ARM7TDMI {
             condition_codes::LE => z && (n != v),
             condition_codes::AL => true,
             _ => false,
+        }
+    }
+
+    fn mla(&mut self, opcode: u32) {
+        if !self.pass_condition(opcode) {
+            return
+        }
+        let rd = ((opcode >> 16) & 0xF) as usize;
+        let rn = ((opcode >> 12) & 0xF) as usize;
+        let rs = ((opcode >> 8) & 0xF) as usize;
+        let rm = (opcode & 0xF) as usize;
+        let s = (opcode >> 20) & 0x1;
+
+        self.register[rd] = self.register[rm] * self.register[rs] + self.register[rn];
+        if s == 1 {
+            self.set_flag(Flag::N, (self.register[rd] >> 31) == 1);
+            self.set_flag(Flag::Z, self.register[rd] == 0);
         }
     }
 }
