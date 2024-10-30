@@ -13,6 +13,7 @@ pub struct ARM7TDMI {
     // fiq high general-purpose regs are 20-24 inclusive
     register: [u32; 37],
     idx: [usize; 17], // this array is of indexes for register
+    spsr: usize, // spsr access in user/system is UB
 }
 
 impl Default for ARM7TDMI {
@@ -25,6 +26,7 @@ impl Default for ARM7TDMI {
             register_index::LR_USR, 
             register_index::PC, 
             register_index::CPSR],
+            spsr: register_index::SPSR_UND,
         };
 
         cpu.register[13] = register_initial::SP_USR;
@@ -38,6 +40,16 @@ impl Default for ARM7TDMI {
 }
 
 impl ARM7TDMI {
+    // ARM INSTRUCTIONS
+    fn BX(&mut self, opcode: u32) {
+        let rm: usize = (opcode & 0b0111) as usize;
+        if (self.pass_condition(opcode)) {
+            self.set_flag(Flag::T, (self.register[self.idx[rm]] & 1) != 0);
+            self.register[15] = self.register[self.idx[rm]] & 0xFFFF_FFFE;
+        }
+    }
+
+    // HELPER FUNCTIONS
     fn set_flag(&mut self, flag: Flag, bit: bool) {
         let mask = flag.get_mask();
         if bit == true {
@@ -54,10 +66,10 @@ impl ARM7TDMI {
 
     fn pass_condition(&self, opcode: u32) -> bool {
         let condition = opcode & CONDITION_MASK;
-        let n = self.get_flag(self.register[16], Flag::N);
-        let z = self.get_flag(self.register[16], Flag::Z);
-        let c = self.get_flag(self.register[16], Flag::C);
-        let v = self.get_flag(self.register[16], Flag::V);
+        let n = self.get_flag(Flag::N);
+        let z = self.get_flag(Flag::Z);
+        let c = self.get_flag(Flag::C);
+        let v = self.get_flag(Flag::V);
     
         match condition {
             condition_codes::EQ => z,
@@ -85,7 +97,7 @@ enum Flag {
     Z,
     C,
     V,
-    Q
+    T
 }
 
 impl Flag {
@@ -95,7 +107,7 @@ impl Flag {
             Flag::Z => flag_masks::Z,
             Flag::C => flag_masks::C,
             Flag::V => flag_masks::V,
-            Flag::Q => flag_masks::Q,
+            Flag::T => flag_masks::T,
         }
     }
 }
