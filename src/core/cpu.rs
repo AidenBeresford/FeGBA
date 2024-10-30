@@ -61,8 +61,8 @@ impl ARM7TDMI {
 
         self.register[rd] = self.register[self.idx[rm]] * self.register[self.idx[rs]] + self.register[self.idx[rn]];
         if s == 1 {
-            self.set_flag(Flag::N, (self.register[rd] >> 31) == 1);
-            self.set_flag(Flag::Z, self.register[rd] == 0);
+            self.set_flag(Flag::N, (self.register[self.idx[rd]] >> 31) == 1);
+            self.set_flag(Flag::Z, self.register[self.idx[rd]] == 0);
         }
     }
 
