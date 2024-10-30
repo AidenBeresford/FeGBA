@@ -102,7 +102,6 @@ enum Flag {
     Z,
     C,
     V,
-    Q
 }
 
 impl Flag {
@@ -112,7 +111,6 @@ impl Flag {
             Flag::Z => flag_masks::Z,
             Flag::C => flag_masks::C,
             Flag::V => flag_masks::V,
-            Flag::Q => flag_masks::Q,
         }
     }
 }
