@@ -38,6 +38,7 @@ pub mod flag_masks {
     pub const Z: u32 = 1 << 30;
     pub const C: u32 = 1 << 29;
     pub const V: u32 = 1 << 28;
+    pub const T: u32 = 1 << 5;
 }
 
 pub mod condition_codes {
