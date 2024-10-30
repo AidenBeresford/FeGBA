@@ -79,7 +79,7 @@ impl ARM7TDMI {
         }
     }
 
-    fn mla(&mut self, opcode: u32) {
+    fn MLA(&mut self, opcode: u32) {
         if !self.pass_condition(opcode) {
             return
         }
@@ -89,7 +89,7 @@ impl ARM7TDMI {
         let rm = (opcode & 0xF) as usize;
         let s = (opcode >> 20) & 0x1;
 
-        self.register[rd] = self.register[rm] * self.register[rs] + self.register[rn];
+        self.register[rd] = self.register[self.idx[rm]] * self.register[self.idx[rs]] + self.register[self.idx[rn]];
         if s == 1 {
             self.set_flag(Flag::N, (self.register[rd] >> 31) == 1);
             self.set_flag(Flag::Z, self.register[rd] == 0);
