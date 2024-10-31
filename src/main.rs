@@ -1,4 +1,5 @@
 mod core;
+mod constants;
 
 use crate::core::bus::Memory;
 use crate::core::bus::BusAccess;
@@ -20,7 +21,7 @@ fn main() {
 }
 */
 
-/* TEST 2 - CPU ACCESS */
+/* TEST 2 - CPU ACCESS
 fn main() {
     let mut memory = Memory::new();
     let mut cpu: ARM7TDMI = Default::default();
@@ -41,4 +42,9 @@ fn main() {
     
     cpu.sbyte(&mut memory, 0x0300_0001);
     println!("{:#04x}", memory.rbyte(0x0300_0001));
+}
+*/
+
+fn main() {
+    println!("Test");
 }

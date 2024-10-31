@@ -36,7 +36,7 @@ pub enum Instruction {
     MoveCompareAddSubImmediate,
     AddSubtract,
     MoveShiftedRegister, // END OF THUMB
-    NoOperation,
+    UndefinedInstruction,
 }
 
 pub fn disassemble(inset: InstructionSet) -> Instruction {
@@ -79,7 +79,7 @@ fn disassemble_arm(opcode: u32) -> Instruction {
     } else if arm_data_processing(opcode) {
         return Instruction::DataProcessing;
     } else {
-        return Instruction::NoOperation;
+        return Instruction::UndefinedInstruction;
     }
 }
 
@@ -123,7 +123,7 @@ fn disassemble_thumb(opcode: u16) -> Instruction {
     } else if thumb_move_shifted_register(opcode) {
         return Instruction::MoveShiftedRegister;
     } else {
-        return Instruction::NoOperation;
+        return Instruction::UndefinedInstruction;
     }
 }
 
@@ -352,4 +352,3 @@ fn thumb_move_shifted_register(opcode: u16) -> bool {
     
     (opcode & mask) == format
 }
-
