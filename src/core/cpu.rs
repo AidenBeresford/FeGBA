@@ -43,26 +43,25 @@ impl ARM7TDMI {
     // ARM INSTRUCTIONS
     fn BX(&mut self, opcode: u32) {
         let rm: usize = (opcode & 0b0111) as usize;
-        if (self.pass_condition(opcode)) {
+        if self.pass_condition(opcode) {
             self.set_flag(Flag::T, (self.register[self.idx[rm]] & 1) != 0);
             self.register[15] = self.register[self.idx[rm]] & 0xFFFF_FFFE;
         }
     }
     
     fn MLA(&mut self, opcode: u32) {
-        if !self.pass_condition(opcode) {
-            return
-        }
-        let rd = ((opcode >> 16) & 0xF) as usize;
-        let rn = ((opcode >> 12) & 0xF) as usize;
-        let rs = ((opcode >> 8) & 0xF) as usize;
-        let rm = (opcode & 0xF) as usize;
-        let s = (opcode >> 20) & 0x1;
-
-        self.register[rd] = self.register[self.idx[rm]] * self.register[self.idx[rs]] + self.register[self.idx[rn]];
-        if s == 1 {
-            self.set_flag(Flag::N, (self.register[self.idx[rd]] >> 31) == 1);
-            self.set_flag(Flag::Z, self.register[self.idx[rd]] == 0);
+        if self.pass_condition(opcode) {
+            let rd = ((opcode >> 16) & 0xF) as usize;
+            let rn = ((opcode >> 12) & 0xF) as usize;
+            let rs = ((opcode >> 8) & 0xF) as usize;
+            let rm = (opcode & 0xF) as usize;
+            let s = (opcode >> 20) & 0x1;
+    
+            self.register[rd] = self.register[self.idx[rm]] * self.register[self.idx[rs]] + self.register[self.idx[rn]];
+            if s == 1 {
+                self.set_flag(Flag::N, (self.register[self.idx[rd]] >> 31) == 1);
+                self.set_flag(Flag::Z, self.register[self.idx[rd]] == 0);
+            }
         }
     }
 
