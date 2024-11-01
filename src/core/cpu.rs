@@ -1,3 +1,4 @@
+use crate::constants;
 use crate::core::bus::Memory;
 use crate::core::bus::BusAccess;
 use crate::constants::register_index;
@@ -61,6 +62,35 @@ impl ARM7TDMI {
             if s == 1 {
                 self.set_flag(Flag::N, (self.register[self.idx[rd]] >> 31) == 1);
                 self.set_flag(Flag::Z, self.register[self.idx[rd]] == 0);
+            }
+        }
+    }
+
+    fn MOV(&mut self, opcode: u32) {
+        if self.pass_condition(opcode) {
+            let s = (opcode >> 20) & 0x1;
+            let rd = (opcode >> 12) & 0xF;
+            let shifter = (opcode >> 12) & 0xFFF;
+
+            self.register[self.idx[rd as usize]] = shifter;
+            if s == 1 && rd == self.register[15] {
+                // To-do: Set cpsr to spsr
+                // CPSR = SPSR
+                // self.register[register_index::CPSR] = "SPSR";
+            }
+            else if s == 1 {
+                // N Flag = Rd[31]
+                self.set_flag(Flag::N, rd >> 31 == 1);
+                // Z Flag = if Rd == 0 then 1 else 0
+                if rd == 0 {
+                    self.set_flag(Flag::Z, false);
+                }
+                else {
+                    self.set_flag(Flag::Z, true);
+                }
+                // To-do: Not sure what shifter carry out is just yet
+                // C Flag = shifter_carry_out
+                // self.set_flag(Flag::C, shifter_carry_out);
             }
         }
     }
