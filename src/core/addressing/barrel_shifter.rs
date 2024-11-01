@@ -14,7 +14,100 @@ enum ShifterEncoding {
 }
 
 // TODO: implement this function that matches ShifterEncoding and returns the carryout
-// pub fn shifter_carry_out(opcode: u32) -> u32 {}
+pub fn shifter_carry_out(&self, opcode: u32, c_flag: u32) -> u32 {
+    rm = opcode & 0xF;
+    rm_val = self.register[rm] as usize;
+    match decode_operand(opcode) {
+        ShifterEncoding::Immediate => {
+            let rotate_imm = (opcode >> 8) & 0xF;
+            if rotate_imm == 0 {
+                c_flag
+            } else {
+                (rm_val >> ((rotate_imm * 2) - 1)) & 1
+            }
+        },
+        ShifterEncoding::Register => c_flag, // no shift, carry from CPSR
+
+        ShifterEncoding::LSLImmediate => {
+            let shift_amount = (opcode >> 7) & 0x1F;
+            if shift_amount == 0 {
+                c_flag
+            } else {
+                (rm_val >> (32 - shift_amount)) & 1
+            }
+        },
+        ShifterEncoding::LSLRegister => {
+            let shift_amount = (opcode >> 8) & 0xF;
+            if shift_amount == 0 {
+                c_flag
+            } else {
+                (rm_val >> (32 - shift_amount)) & 1
+            }
+        },
+
+        ShifterEncoding::LSRImmediate => {
+            let shift_amount = (opcode >> 7) & 0x1F;
+            if shift_amount == 0 {
+                (rm_val >> 31) & 1
+            } else {
+                (rm_val >> (shift_amount - 1)) & 1
+            }
+        },
+        ShifterEncoding::LSRRegister => {
+            let shift_amount = (opcode >> 8) & 0xF;
+            if shift_amount == 0 {
+                c_flag
+            } else if shift_amount < 32 {
+                (rm_val >> (shift_amount - 1)) & 1
+            } else {
+                0
+            }
+        },
+
+        ShifterEncoding::ASRImmediate => {
+            let shift_amount = (opcode >> 7) & 0x1F;
+            if shift_amount == 0 {
+                (rm_val >> 31) & 1
+            } else {
+                (rm_val >> (shift_amount - 1)) & 1
+            }
+        },
+        ShifterEncoding::ASRRegister => {
+            let shift_amount = (opcode >> 8) & 0xF;
+            if shift_amount == 0 {
+                c_flag
+            } else if shift_amount < 32 {
+                (rm_val >> (shift_amount - 1)) & 1
+            } else {
+                (rm_val >> 31) & 1
+            }
+        },
+
+        ShifterEncoding::RORImmediate => {
+            let rotate_amount = (opcode >> 7) & 0x1F;
+            if rotate_amount == 0 {
+                c_flag
+            } else {
+                (rm_val >> (rotate_amount - 1)) & 1
+            }
+        },
+        ShifterEncoding::RORRegister => {
+            let rotate_amount = (opcode >> 8) & 0xF;
+            if rotate_amount == 0 {
+                c_flag
+            } else {
+                let rotate = rotate_amount % 32;
+                (rm_val >> (rotate - 1)) & 1
+            }
+        },
+
+        ShifterEncoding::RRXImmediate => rm_val & 1,
+
+        _ => 0, // Undefined case
+    }
+}
+
+
 
 fn decode_operand(opcode: u32) -> ShifterEncoding {
     if immediate(opcode) {
