@@ -13,10 +13,11 @@ enum ShifterEncoding {
     Undefined,
 }
 
-// TODO: implement this function that matches ShifterEncoding and returns the carryout
-pub fn shifter_carry_out(&self, opcode: u32, c_flag: u32) -> u32 {
-    rm = opcode & 0xF;
-    rm_val = self.register[rm] as usize;
+
+pub fn shifter_carry_out(&self, opcode: u32) -> u32 {
+    let rm = opcode & 0xF;
+    let rm_val = self.register[rm] as usize;
+    let c_flag = get_flag(C);
     match decode_operand(opcode) {
         ShifterEncoding::Immediate => {
             let rotate_imm = (opcode >> 8) & 0xF;
