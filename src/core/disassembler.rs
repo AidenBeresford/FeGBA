@@ -352,4 +352,3 @@ fn thumb_move_shifted_register(opcode: u16) -> bool {
     
     (opcode & mask) == format
 }
-
