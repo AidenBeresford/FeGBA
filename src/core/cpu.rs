@@ -55,27 +55,6 @@ impl ARM7TDMI {
         }
     }
 
-    fn BLX_1(&mut self, opcode: u32) {
-        let h = (opcode >> 24) & 1;
-        let signed_immed_24 = opcode & 0x00FF_FFFF;
-
-        self.register[self.idx[14]] = self.register[self.idx[15]].wrapping_add(4);
-        self.set_flag(Flag::T, true);
-        self.register[self.idx[15]] = (self.register[self.idx[15]] as i32)
-            .wrapping_add(sign_extend_32(signed_immed_24, 23) << 2)
-            .wrapping_add((h as i32) << 1) as u32;
-    }
-
-    fn BLX_2(&mut self, opcode: u32) {
-        if self.pass_condition(opcode) {
-            let rm_index: usize = (opcode & 0b0111) as usize;
-
-            self.register[self.idx[14]] = self.register[self.idx[15]].wrapping_add(4);
-            self.set_flag(Flag::T, (self.register[self.idx[rm_index]] & 1) != 0);
-            self.register[15] = self.register[self.idx[rm_index]] & 0xFFFF_FFFE;
-        }
-    }
-
     fn BX(&mut self, opcode: u32) {
         let rm: usize = (opcode & 0b0111) as usize;
         if (self.pass_condition(opcode)) {
