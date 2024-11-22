@@ -74,9 +74,8 @@ impl ARM7TDMI {
 
             self.register[self.idx[rd as usize]] = shifter;
             if s == 1 && rd == self.register[15] {
-                // To-do: Set cpsr to spsr
-                // CPSR = SPSR
-                // self.register[register_index::CPSR] = "SPSR";
+                // Note: not sure if that's the correct SPSR
+                self.register[register_index::CPSR] = self.register[register_index::SPSR_UND];
             }
             else if s == 1 {
                 // N Flag = Rd[31]
@@ -88,7 +87,7 @@ impl ARM7TDMI {
                 else {
                     self.set_flag(Flag::Z, true);
                 }
-                // To-do: Not sure what shifter carry out is just yet
+                // I need the shifter_carray_out to be implemented
                 // C Flag = shifter_carry_out
                 // self.set_flag(Flag::C, shifter_carry_out);
             }
