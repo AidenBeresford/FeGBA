@@ -1,3 +1,4 @@
+use crate::constants;
 use crate::core::bus::Memory;
 use crate::core::bus::BusAccess;
 use crate::constants::register_index;
@@ -61,6 +62,80 @@ impl ARM7TDMI {
             if s == 1 {
                 self.set_flag(Flag::N, (self.register[self.idx[rd]] >> 31) == 1);
                 self.set_flag(Flag::Z, self.register[self.idx[rd]] == 0);
+            }
+        }
+    }
+
+    fn MOV(&mut self, opcode: u32) {
+        if self.pass_condition(opcode) {
+            let s = (opcode >> 20) & 0x1;
+            let rd = (opcode >> 12) & 0xF;
+            let shifter = opcode & 0xFFF;
+
+            self.register[self.idx[rd as usize]] = shifter;
+            if s == 1 && rd == self.register[15] {
+                // CPSR = SPSR
+                // Note: not sure if that's the correct SPSR
+                self.register[register_index::CPSR] = self.register[register_index::SPSR_UND];
+            }
+            else if s == 1 {
+                // N Flag = Rd[31]
+                self.set_flag(Flag::N, rd >> 31 == 1);
+                // Z Flag = if Rd == 0 then 1 else 0
+                self.set_flag(Flag::Z, rd != 0);
+                // C Flag = shifter_carry_out // I need the shifter_carry_out to be implemented
+                // self.set_flag(Flag::C, shifter_carry_out);
+                // V Flag = unaffected
+            }
+        }
+    }
+
+    fn ORR(&mut self, opcode: u32) {
+        if self.pass_condition(opcode) {
+            let s = (opcode >> 20) & 0x1;
+            let rd = (opcode >> 12) & 0xF;
+            let rn = (opcode >> 16) & 0xF;
+            let shifter = opcode & 0xFFF;
+
+            // Rd = Rn OR shifter_operand
+            self.register[self.idx[rd as usize]] = shifter | rn;
+            if s == 1 && rd == self.register[15] {
+                // CPSR = SPSR
+                self.register[register_index::CPSR] = self.register[register_index::SPSR_UND];
+            }
+            else if s == 1 {
+                // N Flag = Rd[31]
+                self.set_flag(Flag::N, rd >> 31 == 1);
+                // Z Flag = if Rd == 0 then 1 else 0
+                self.set_flag(Flag::Z, rd != 0);
+                // C Flag = shifter_carry_out
+                // self.set_flag(Flag::C, shifter_carry_out);
+                // V Flag = unaffected
+            }
+        }
+    }
+
+    fn EOR(&mut self, opcode: u32) {
+        if self.pass_condition(opcode) {
+            let s = (opcode >> 20) & 0x1;
+            let rd = (opcode >> 12) & 0xF;
+            let rn = (opcode >> 16) & 0xF;
+            let shifter = opcode & 0xFFF;
+
+            // Rd = Rn OR shifter_operand
+            self.register[self.idx[rd as usize]] = shifter ^ rn;
+            if s == 1 && rd == self.register[15] {
+                // CPSR = SPSR
+                self.register[register_index::CPSR] = self.register[register_index::SPSR_UND];
+            }
+            else if s == 1 {
+                // N Flag = Rd[31]
+                self.set_flag(Flag::N, rd >> 31 == 1);
+                // Z Flag = if Rd == 0 then 1 else 0
+                self.set_flag(Flag::Z, rd != 0);
+                // C Flag = shifter_carry_out
+                // self.set_flag(Flag::C, shifter_carry_out);
+                // V Flag = unaffected
             }
         }
     }
