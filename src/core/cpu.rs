@@ -108,6 +108,8 @@ impl ARM7TDMI {
     }
 }
 
+
+
 enum Flag {
     N,
     Z,
@@ -126,4 +128,31 @@ impl Flag {
             Flag::T => flag_masks::T,
         }
     }
+}
+
+fn BIC(opcode:u32){
+    let shifter_operand:u32 = 0b0000_0000_0000_0000_0000_1111_1111_1111 & opcode;
+    let s:u32 = (0x100000 & opcode) >> 20;
+    let Rn:u32 = (0xF0000 & opcode) >> 16;
+    let Rd:u32 = (0xF000 & opcode) >> 12;
+
+    if pass_condition(opcode){
+        Rd = Rn & (!shifter_operand);
+        if(s == 1) && (register_index::PC){ 
+            self.register[register_index::CPSR] = self.register[register_index::SPSR];
+        }
+        else if(s == 1){
+            set_flag(self, N, Rd[31]);
+            if(Rd == 0){
+                set_flag(self, Z, 1);
+            }
+            else{
+                set_flag(self, Z, 0);
+            }
+            set_flag(self, C, shifter_carry_out);
+            //V_Flag unaffected 
+        }
+
+    }
+
 }
