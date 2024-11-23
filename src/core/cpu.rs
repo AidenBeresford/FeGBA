@@ -56,14 +56,51 @@ impl ARM7TDMI {
             let rs = ((opcode >> 8) & 0xF) as usize;
             let rm = (opcode & 0xF) as usize;
             let s = (opcode >> 20) & 0x1;
-    
-            self.register[rd] = self.register[self.idx[rm]] * self.register[self.idx[rs]] + self.register[self.idx[rn]];
+            
+            let result = self.register[self.idx[rm]] as u64 * self.register[self.idx[rs]] as u64 + self.register[self.idx[rn]] as u64;
+            self.register[self.idx[rd]] = (result & 0xFFFF_FFFF) as u32; 
+
             if s == 1 {
                 self.set_flag(Flag::N, (self.register[self.idx[rd]] >> 31) == 1);
                 self.set_flag(Flag::Z, self.register[self.idx[rd]] == 0);
             }
         }
     }
+
+    fn MUL(&mut self, opcode: u32) {
+        if self.pass_condition(opcode) {
+            let rd = ((opcode >> 16) & 0xF) as usize;
+            let rs = ((opcode >> 8) & 0xF) as usize;
+            let rm = (opcode & 0xF) as usize;
+            let s = (opcode >> 20) & 0x1;
+            
+            let result = self.register[self.idx[rm]] as u64 * self.register[self.idx[rs]] as u64;
+            self.register[rd] = (result & 0xFFFF_FFFF) as u32; 
+
+            if s == 1 {
+                self.set_flag(Flag::N, (self.register[self.idx[rd]] >> 31) == 1);
+                self.set_flag(Flag::Z, self.register[self.idx[rd]] == 0);
+            }
+        }
+    }
+
+    // fn UMULL(&mut self, opcode: u32) {
+    //     if self.pass_condition(opcode) {
+    //         let rd_hi = ((opcode >> 16) & 0xF) as usize;
+    //         let rd_lo = ((opcode >> 12) & 0xF) as usize;
+    //         let rs = ((opcode >> 8) & 0xF) as usize;
+    //         let rm = (opcode & 0xF) as usize;
+    //         let s = (opcode >> 20) & 0x1;
+            
+    //         let result = self.register[self.idx[rm]] as u64 * self.register[self.idx[rs]] as u64;
+    //         self.register[rd_hi] = self.register[self.idx[rm]] * self.register[self.idx[rs]];
+    //         self.register[rd] = self.register[self.idx[rm]] * self.register[self.idx[rs]];
+    //         if s == 1 {
+    //             self.set_flag(Flag::N, (self.register[self.idx[rd]] >> 31) == 1);
+    //             self.set_flag(Flag::Z, self.register[self.idx[rd]] == 0);
+    //         }
+    //     }
+    // }
 
     // HELPER FUNCTIONS
     fn set_flag(&mut self, flag: Flag, bit: bool) {
