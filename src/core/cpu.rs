@@ -112,12 +112,12 @@ impl ARM7TDMI {
             let s = (opcode >> 20) & 0x1;
             
             let result = self.register[self.idx[rm]] as u64 * self.register[self.idx[rs]] as u64;
-            let lower_bits = (result & 0xFFFF_FFFF)  + self.register[self.idx[rd_lo]] as u64;
-            let carry = self.carry_from(lower_bits);
-            let upper_bits = (result >> 32) + self.register[self.idx[rd_hi]] as u64 + carry as u64;
+            let low_bits = (result & 0xFFFF_FFFF)  + self.register[self.idx[rd_lo]] as u64;
+            let carry = self.carry_from(low_bits);
+            let high_bits = (result >> 32) + self.register[self.idx[rd_hi]] as u64 + carry as u64;
             
-            self.register[rd_lo] = lower_bits as u32;
-            self.register[rd_hi] = upper_bits as u32;
+            self.register[rd_lo] = low_bits as u32;
+            self.register[rd_hi] = high_bits as u32;
             
             if s == 1 {
                 self.set_flag(Flag::N, (self.register[self.idx[rd_hi]] >> 31) == 1);
@@ -125,6 +125,51 @@ impl ARM7TDMI {
             }
         }
     }
+
+    
+    fn SMULL(&mut self, opcode: u32) {
+        if self.pass_condition(opcode) {
+            let rd_hi = ((opcode >> 16) & 0xF) as usize;
+            let rd_lo = ((opcode >> 12) & 0xF) as usize;
+            let rs = ((opcode >> 8) & 0xF) as usize;
+            let rm = (opcode & 0xF) as usize;
+            let s = (opcode >> 20) & 0x1;
+             
+            let result = self.register[self.idx[rm]] as i64 * self.register[self.idx[rs]] as i64;
+            
+            self.register[rd_hi] = (result >> 32) as u32; 
+            self.register[rd_lo] = (result & 0xFFFF_FFFF) as u32;
+            
+            
+            if s == 1 {
+                self.set_flag(Flag::N, (self.register[self.idx[rd_hi]] >> 31) == 1);
+                self.set_flag(Flag::Z, self.register[self.idx[rd_hi]] == 0 && self.register[self.idx[rd_lo]] == 0);
+            }
+        }
+    }
+
+     fn SMLAL(&mut self, opcode: u32) {
+        if self.pass_condition(opcode) {
+            let rd_hi = ((opcode >> 16) & 0xF) as usize;
+            let rd_lo = ((opcode >> 12) & 0xF) as usize;
+            let rs = ((opcode >> 8) & 0xF) as usize;
+            let rm = (opcode & 0xF) as usize;
+            let s = (opcode >> 20) & 0x1;
+            
+            let result = self.register[self.idx[rm]] as i64 * self.register[self.idx[rs]] as i64;
+            let low_bits = (result & 0xFFFF_FFFF) + self.register[self.idx[rd_lo]] as i64;
+            let carry = self.carry_from(low_bits as u64);
+            let high_bits = (result >> 32) as i64 + self.register[self.idx[rd_hi]] as i64 + carry as i64;
+            
+            self.register[rd_lo] = low_bits as u32;
+            self.register[rd_hi] = high_bits as u32;
+            
+            if s == 1 {
+                self.set_flag(Flag::N, (self.register[self.idx[rd_hi]] >> 31) == 1);
+                self.set_flag(Flag::Z, self.register[self.idx[rd_hi]] == 0 && self.register[self.idx[rd_lo]] == 0);
+            }
+        }
+    } 
 
     fn carry_from(&self, val: u64) -> bool {
         val > 0xFFFF_FFFF
