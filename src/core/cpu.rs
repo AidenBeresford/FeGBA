@@ -108,31 +108,7 @@ impl ARM7TDMI {
     }
 }
 
-fn BIC(opcode:u32 {
-    let cond:u32 = (0xF0000000 & opcode) >> 28;
-    let shifter_operand:u32 = 0b0000_0000_0000_0000_0000_1111_1111_1111 & opcode;
-    let s:u32 = (0x100000 & opcode) >> 20;
-    let Rn:u32 = (0xF0000 & opcode) >> 16;
-    let Rd:u32 = (0xF000 & opcode) >> 12;
 
-    if condition_passed(cond) {//I dont know if 0b1111 is pass/fail
-        Rd = Rn & (!shifter_operand)
-        if(s==1) and (Rd == 0b1111){ //should be register 15
-            cpsr = spsr
-        }
-        else if(s==1){
-            cpsr[31] = Rd[31]
-            if(Rd==0){
-                cpsr[30] = 1
-            }
-            else{
-                cpsr[30] = 0
-            }
-            cpsr[29] = shifter_carry_out
-            //V_Flag unaffected 
-        }
-    }
-}
 
 enum Flag {
     N,
@@ -163,7 +139,7 @@ fn BIC(opcode:u32){
     if pass_condition(opcode){
         Rd = Rn & (!shifter_operand);
         if(s == 1) && (register_index::PC){ 
-            self.register[register_index::CPSR] = self.register[register_index::SPSR]
+            self.register[register_index::CPSR] = self.register[register_index::SPSR];
         }
         else if(s == 1){
             set_flag(self, N, Rd[31]);
