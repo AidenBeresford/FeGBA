@@ -67,7 +67,7 @@ pub fn shifter_carry_out(&self, opcode: u32) -> u32 {
                 },
                 3 => {
                     if shift_imm == 0 {
-                        index = c_flag << 31 || rm_val >> 1;
+                        index = c_flag << 31 | rm_val >> 1;
                     } else {
                         index = rm_val.rotate_right(shift_imm);
                     }
@@ -134,7 +134,7 @@ pub fn shifter_carry_out(&self, opcode: u32) -> u32 {
                 },
                 3 => {
                     if shift_imm == 0 {
-                        index = c_flag << 31 || rm_val >> 1;
+                        index = c_flag << 31 | rm_val >> 1;
                     } else {
                         index = rm_val.rotate_right(shift_imm);
                     }
@@ -207,7 +207,7 @@ pub fn shifter_carry_out(&self, opcode: u32) -> u32 {
                 },
                 3 => {
                     if shift_imm == 0 {
-                        index = c_flag << 31 || rm_val >> 1;
+                        index = c_flag << 31 | rm_val >> 1;
                     } else {
                         index = rm_val.rotate_right(shift_imm);
                     }
