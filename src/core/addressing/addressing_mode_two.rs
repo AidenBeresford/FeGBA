@@ -1,4 +1,4 @@
-enum ShifterEncoding {
+enum ModeEncoding {
     Immediate,
     Register,
     ScaledRegister,
@@ -10,7 +10,7 @@ enum ShifterEncoding {
     ScaledRegisterPostIndexed,
 }
 
-pub fn shifter_carry_out(&self, opcode: u32) -> u32 {
+pub fn get_address(&self, opcode: u32) -> u32 {
     let c_flag = get_flag(C);
     let u = (opcode >> 23) & 1;
     let rn = (opcode >> 16) & 0xF;
@@ -18,7 +18,7 @@ pub fn shifter_carry_out(&self, opcode: u32) -> u32 {
 
     let address: u32;
     match decode_operand(opcode) {
-        ShifterEncoding::Immediate => {
+        ModeEncoding::Immediate => {
             let offset_12 = opcode & 0xFFF;
             if u == 1{
                 address = rn_val + offset_12;
@@ -26,7 +26,7 @@ pub fn shifter_carry_out(&self, opcode: u32) -> u32 {
                 address = rn_val - offset_12;
             }
         },
-        ShifterEncoding::Register => {
+        ModeEncoding::Register => {
             let rm = opcode & 0xF;
             let rm_val = self.register[self.idx[rm]] as usize;
             if u == 1{
@@ -35,7 +35,7 @@ pub fn shifter_carry_out(&self, opcode: u32) -> u32 {
                 address = rn_val - rm_val;
             }
         },
-        ShifterEncoding::ScaledRegister => {
+        ModeEncoding::ScaledRegister => {
             let shift_imm = (opcode >> 7) & 0x1F;
             let shift = (opcode >> 5) & 0b11;
             let rm = opcode & 0xF;
@@ -79,7 +79,7 @@ pub fn shifter_carry_out(&self, opcode: u32) -> u32 {
                 address = rn_val - index;
             }
         },
-        ShifterEncoding::ImmediatePreIndexed => {
+        ModeEncoding::ImmediatePreIndexed => {
             let offset_12 = opcode & 0xFFF;
             if u == 1 {
                 address = rn_val + offset_12;
@@ -90,7 +90,7 @@ pub fn shifter_carry_out(&self, opcode: u32) -> u32 {
                 self.register[self.idx[rn]] = address;
             }
         },
-        ShifterEncoding::RegisterPreIndexed => {
+        ModeEncoding::RegisterPreIndexed => {
             let rm = opcode & 0xF;
             let rm_val = self.register[self.idx[rm]] as usize;
             if u == 1 {
@@ -102,7 +102,7 @@ pub fn shifter_carry_out(&self, opcode: u32) -> u32 {
                 self.register[self.idx[rn]] = address;
             }
         },
-        ShifterEncoding::ScaledRegisterPreIndexed => {
+        ModeEncoding::ScaledRegisterPreIndexed => {
             let shift_imm = (opcode >> 7) & 0x1F;
             let shift = (opcode >> 5) & 0b11;
             let rm = opcode & 0xF;
@@ -149,7 +149,7 @@ pub fn shifter_carry_out(&self, opcode: u32) -> u32 {
                 self.register[self.idx[rn]] = address;
             }
         },
-        ShifterEncoding::ImmediatePostIndexed => {
+        ModeEncoding::ImmediatePostIndexed => {
             offset_12 = opcode & 0xFFF;
 
             address = rn_val;
@@ -161,7 +161,7 @@ pub fn shifter_carry_out(&self, opcode: u32) -> u32 {
                 }
             }
         },
-        ShifterEncoding::RegisterPostIndexed => {
+        ModeEncoding::RegisterPostIndexed => {
             rm = opcode & 0xF;
             rm_val = self.register[self.idx[rm]] as usize;
 
@@ -174,7 +174,7 @@ pub fn shifter_carry_out(&self, opcode: u32) -> u32 {
                 }
             }
         },
-        ShifterEncoding::ScaledRegisterPostIndexed => {
+        ModeEncoding::ScaledRegisterPostIndexed => {
             let shift_imm = (opcode >> 7) & 0x1F;
             let shift = (opcode >> 5) & 0b11;
             let rm = opcode & 0xF;
@@ -228,7 +228,7 @@ pub fn shifter_carry_out(&self, opcode: u32) -> u32 {
 
 
 
-fn decode_operand(opcode: u32) -> ShifterEncoding {
+fn decode_operand(opcode: u32) -> ModeEncoding {
     let i = (opcode >> 25) & 1;
     let p = (opcode >> 24) & 1;
     let w = (opcode >> 21) & 1;
@@ -236,34 +236,34 @@ fn decode_operand(opcode: u32) -> ShifterEncoding {
     // Immediate
     if i == 0 {
         if p == 0 {
-            ShifterEncoding::ImmediatePostIndexed;
+            ModeEncoding::ImmediatePostIndexed;
         } else {
             if w == 0 {
-                ShifterEncoding::Immediate;
+                ModeEncoding::Immediate;
             } else {
-                ShifterEncoding::ImmediatePreIndexed;
+                ModeEncoding::ImmediatePreIndexed;
             }
         }
     } else {
         // unscaled register
         if (opcode & 0x0FF0) == 0 {
             if p == 0 {
-                ShifterEncoding::RegisterPostIndexed;
+                ModeEncoding::RegisterPostIndexed;
             } else {
                 if w == 0 {
-                    ShifterEncoding::Register;
+                    ModeEncoding::Register;
                 } else {
-                    ShifterEncoding::RegisterPreIndexed;
+                    ModeEncoding::RegisterPreIndexed;
                 }
             }
         } else {
             if p == 0 {
-                ShifterEncoding::ScaledRegisterPostIndexed;
+                ModeEncoding::ScaledRegisterPostIndexed;
             } else {
                 if w == 0 {
-                    ShifterEncoding::ScaledRegister;
+                    ModeEncoding::ScaledRegister;
                 } else {
-                    ShifterEncoding::ScaledRegisterPreIndexed;
+                    ModeEncoding::ScaledRegisterPreIndexed;
                 }
             }
         }
