@@ -1,4 +1,5 @@
 use crate::core::cpu::ARM7TDMI;
+use crate::core::cpu::Flag;
 
 enum ShifterEncoding {
     Immediate,
@@ -19,36 +20,36 @@ enum ShifterEncoding {
 pub fn addressing_mode_1(cpu: &ARM7TDMI, opcode: u32, operand: &mut u32) -> bool {
     let rm = opcode & 0xF;
     let rm_val = cpu.register[cpu.idx[rm as usize]];
-    let c_flag = cpu.get_flag(C);
+    let c_flag = cpu.get_flag(Flag::C);
     match decode_operand(opcode) {
         ShifterEncoding::Immediate => {
-            let rotate_imm: u8 = (opcode >> 8) & 0xF;
-            let immed_8: u8 = opcode & 0xFF;
+            let rotate_imm: u8 = ((opcode >> 8) & 0xF) as u8;
+            let immed_8: u8 = (opcode & 0xFF) as u8;
             let rotate_amt: u8 = 2*rotate_imm;
 
-            operand = (immed_8 << (32-rotate_amt)) | (immed_8 >> rotate_amt);
+            *operand = ((immed_8 << (32-rotate_amt)) | (immed_8 >> rotate_amt)) as u32;
             
             if rotate_amt == 0 {
                 c_flag
             } else {
-                (operand>>31) == 1
+                (*operand>>31) == 1
             }
         },
         
         ShifterEncoding::Register => {
-            operand = rm_val;
+            *operand = rm_val;
             c_flag
         },
         // no shift, carry from CPSR
 
         ShifterEncoding::LSLImmediate => {
-            let shift_imm: u8 = (opcode >> 7) & 0x1F;
+            let shift_imm: u8 = ((opcode >> 7) & 0x1F) as u8;
             
             if shift_imm == 0 {
-                operand = rm_val;
+                *operand = rm_val;
                 c_flag
             } else {
-                operand = rm_val << shift_imm;
+                *operand = rm_val << shift_imm;
                 ((rm_val >> (32-shift_imm)) & 1) == 1 
             }
         },
@@ -58,16 +59,16 @@ pub fn addressing_mode_1(cpu: &ARM7TDMI, opcode: u32, operand: &mut u32) -> bool
             let rs_val = cpu.register[cpu.idx[rs as usize]] & 0xFF;
             
             if rs_val == 0 {
-                operand = rm_val;
+                *operand = rm_val;
                 c_flag
             } else if rs_val < 32 {
-                operand = rm_val << rs_val;
+                *operand = rm_val << rs_val;
                 ((rm_val >> (32-rs_val)) & 1) == 1
             } else if rs_val == 32 {
-                operand = 0;
+                *operand = 0;
                 (rs_val & 1) == 1
             } else {
-                operand = 0;
+                *operand = 0;
                 false
             }
             
@@ -77,10 +78,10 @@ pub fn addressing_mode_1(cpu: &ARM7TDMI, opcode: u32, operand: &mut u32) -> bool
             let shift_imm = (opcode >> 7) & 0x1F;
             
             if shift_imm == 0 {
-                operand = 0;
+                *operand = 0;
                 (rm_val >> 31) == 1
             } else {
-                operand = rm_val >> shift_imm;
+                *operand = rm_val >> shift_imm;
                 ((rm >> (shift_imm-1)) & 1) == 1
             }
         },
@@ -90,16 +91,16 @@ pub fn addressing_mode_1(cpu: &ARM7TDMI, opcode: u32, operand: &mut u32) -> bool
             let rs_val = cpu.register[cpu.idx[rs as usize]] & 0xFF;
             
             if rs_val == 0 {
-                operand = rm_val;
+                *operand = rm_val;
                 c_flag
             } else if rs_val < 32 {
-                operand = rm_val >> rs_val;
+                *operand = rm_val >> rs_val;
                 ((rm_val >> (rs_val-1)) & 1) == 1
             } else if rs_val == 32 {
-                operand = 0;
+                *operand = 0;
                 (rm_val >> 31) == 1
             } else {
-                operand = 0;
+                *operand = 0;
                 false
             }
         },
@@ -108,10 +109,10 @@ pub fn addressing_mode_1(cpu: &ARM7TDMI, opcode: u32, operand: &mut u32) -> bool
             let shift_imm = (opcode >> 7) & 0x1F;
             
             if shift_imm == 0 {
-                operand = 0xFFFF_FFFF * (rm_val >> 31);
+                *operand = 0xFFFF_FFFF * (rm_val >> 31);
                 (rm_val >> 31) == 1
             } else {
-                operand = (rm_val as i32) >> shift_imm;
+                *operand = ((rm_val as i32) >> shift_imm) as u32;
                 ((rm_val >> (shift_imm - 1)) & 1) == 1
             }
         },
@@ -121,13 +122,13 @@ pub fn addressing_mode_1(cpu: &ARM7TDMI, opcode: u32, operand: &mut u32) -> bool
             let rs_val = cpu.register[cpu.idx[rs as usize]] & 0xFF;
             
             if rs_val == 0 {
-                operand = rm_val;
+                *operand = rm_val;
                 c_flag
             } else if rs_val < 32 {
-                operand = (rm_val as i32) >> rs_val;
+                *operand = ((rm_val as i32) >> rs_val) as u32;
                 ((rm_val >> (rs_val - 1)) & 1) == 1
             } else {
-                operand = 0xFFFF_FFFF * (rm_val >> 31);
+                *operand = 0xFFFF_FFFF * (rm_val >> 31);
                 (rm_val >> 31) == 1
             }
         },
@@ -136,10 +137,10 @@ pub fn addressing_mode_1(cpu: &ARM7TDMI, opcode: u32, operand: &mut u32) -> bool
             let shift_imm = (opcode >> 7) & 0x1F;
 
             if shift_imm == 0 {
-                operand = ((c_flag as u32) << 31) | (rm_val >> 1);
+                *operand = ((c_flag as u32) << 31) | (rm_val >> 1);
                 (rm_val & 1) == 1
             } else {
-                operand = (rm_val << (32-shift_imm)) | (rm_val >> shift_imm);
+                *operand = (rm_val << (32-shift_imm)) | (rm_val >> shift_imm);
                 ((rm_val >> (shift_imm-1)) & 1) == 1
             }
         },
@@ -147,28 +148,27 @@ pub fn addressing_mode_1(cpu: &ARM7TDMI, opcode: u32, operand: &mut u32) -> bool
         ShifterEncoding::RORRegister => { 
             let rs = (opcode >> 8) & 0xF;
             let rs_val = cpu.register[cpu.idx[rs as usize]] & 0xFF;
-            let rs_small = rs_val & 0x1F
+            let rs_small = rs_val & 0x1F;
 
             if rs_val == 0 {
-                operand = rm_val;
+                *operand = rm_val;
                 c_flag
             } else if rs_small == 0 {
-                operand = rm_val;
+                *operand = rm_val;
                 (rm_val >> 31) == 1
             } else {
-                operand = (rm_val << (32-rs_small)) | (rm_val >> rs_small);
+                *operand = (rm_val << (32-rs_small)) | (rm_val >> rs_small);
                 ((rm_val >> (rs_small-1)) & 1) == 1
             }
         },
 
         ShifterEncoding::RRXImmediate => {
-            operand = ((c_flag as u32) << 31) | (rm_val >> 1);
+            *operand = ((c_flag as u32) << 31) | (rm_val >> 1);
             (rm_val & 1) == 1
         },
 
         _ => {
             panic!("UNDEFINED ADDRESSING MODE 1 CASE!");
-            false
         }, // Undefined case
     }
 }
