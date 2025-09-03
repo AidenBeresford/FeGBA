@@ -233,7 +233,7 @@ pub fn addressing_mode_2(cpu: &mut ARM7TDMI, opcode: u32, operand: &mut u32) {
                 }
             }
             else {
-                panic!("OH SHIT! CHECK ADDMODE2 SCALED POST");
+                panic!("OH CRIKEY! CHECK ADDMODE2 SCALED POST");
             }
 
             if cpu.pass_condition(opcode) {
