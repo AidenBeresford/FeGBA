@@ -1,4 +1,5 @@
 use crate::core::cpu::ARM7TDMI;
+use crate::core::cpu::Flag;
 
 enum ModeEncoding {
     ImmediateOffset,
@@ -39,7 +40,51 @@ pub fn addressing_mode_2(cpu: &mut ARM7TDMI, opcode: u32, operand: &mut u32) {
         },
 
         ModeEncoding::ScaledOffset => {
-            // fucking mouthful of bitshift shenanigans I don't want to write for now
+            let rm = opcode & 0xF;
+            let rm_val = cpu.register[cpu.idx[rm as usize]];
+            let u_flag = opcode & (1<<23);
+            let shift = (opcode & 0b0110_0000) >> 5;
+            let shift_imm = (opcode >> 6) & 0b0001_1111;
+            let index: u32;
+
+            if shift == 0b00 {
+                index = rm_val << shift_imm;
+            }
+            else if shift == 0b01 {
+                if shift_imm == 0 {
+                    index = 0;
+                } else {
+                    index = rm_val >> shift_imm;
+                }
+            }
+            else if shift == 0b10 {
+                if shift_imm == 0 {
+                    if (rm_val >> 31) == 1 {
+                        index = 0xFFFF_FFFF;
+                    } else {
+                        index = 0;
+                    }
+                } else {
+                    index = ((rm_val as i32) >> shift_imm) as u32;
+                }
+            }
+            else if shift == 0b11 {
+                if shift_imm == 0 {
+                    let c_flag = if cpu.get_flag(Flag::C) {1} else {0};
+                    index = (c_flag << 31) | (rm_val >> 1); 
+                } else {
+                    index = rm_val.rotate_right(shift_imm);
+                }
+            }
+            else {
+                panic!("OH FUCK! CHECK ADDMODE2 SCALED OFFSET");
+            } 
+            
+            if u_flag != 0 {
+                *operand = rn_val + index;
+            } else {
+                *operand = rn_val - index;
+            }
         },
 
         ModeEncoding::ImmediatePre => { 
@@ -70,8 +115,56 @@ pub fn addressing_mode_2(cpu: &mut ARM7TDMI, opcode: u32, operand: &mut u32) {
             }
         },
 
-        ModeEncoding::ScaledPre => {
-            // delaying this for as long as humanly possible
+        ModeEncoding::ScaledPre => { 
+            let rm = opcode & 0xF;
+            let rm_val = cpu.register[cpu.idx[rm as usize]];
+            let u_flag = opcode & (1<<23);
+            let shift = (opcode & 0b0110_0000) >> 5;
+            let shift_imm = (opcode >> 6) & 0b0001_1111;
+            let index: u32;
+
+            if shift == 0b00 {
+                index = rm_val << shift_imm;
+            }
+            else if shift == 0b01 {
+                if shift_imm == 0 {
+                    index = 0;
+                } else {
+                    index = rm_val >> shift_imm;
+                }
+            }
+            else if shift == 0b10 {
+                if shift_imm == 0 {
+                    if rm_val >> 31 == 1 {
+                        index = 0xFFFF_FFFF;
+                    } else {
+                        index = 0;
+                    }
+                } else {
+                    index = ((rm_val as i32) >> shift_imm) as u32;
+                }
+            }
+            else if shift == 0b11 {       
+                if shift_imm == 0 {
+                    let c_flag = if cpu.get_flag(Flag::C) {1} else {0};
+                    index = (c_flag << 31) | (rm_val >> 1); 
+                } else {
+                    index = rm_val.rotate_right(shift_imm);
+                }
+            }
+            else {
+                panic!("OH SHIT! CHECK ADDMODE2 SCALED PRE");
+            }
+
+            if u_flag != 0 {
+                *operand = rn_val + index;
+            } else {
+                *operand = rn_val - index;
+            }
+
+            if cpu.pass_condition(opcode) {
+                cpu.register[cpu.idx[rn as usize]] = *operand;
+            }
         },
 
         ModeEncoding::ImmediatePost => {
@@ -101,8 +194,55 @@ pub fn addressing_mode_2(cpu: &mut ARM7TDMI, opcode: u32, operand: &mut u32) {
             }
         },
 
-        ModeEncoding::ScaledPost => {
-            // "I'm in hell." -Obito Uchiha
+        ModeEncoding::ScaledPost => { 
+            let rm = opcode & 0xF;
+            let rm_val = cpu.register[cpu.idx[rm as usize]];
+            let u_flag = opcode & (1<<23);
+            let shift = (opcode & 0b0110_0000) >> 5;
+            let shift_imm = (opcode >> 6) & 0b0001_1111;
+            let index: u32;
+
+            *operand = rn_val;
+            if shift == 0b00 {
+                index = rm_val << shift_imm;
+            }
+            else if shift == 0b01 {
+                if shift_imm == 0 {
+                    index = 0;
+                } else {
+                    index = rm_val >> shift_imm;
+                }
+            }
+            else if shift == 0b10 {
+                if shift_imm == 0 {
+                    if rm_val >> 31 == 1 {
+                        index = 0xFFFF_FFFF;
+                    } else {
+                        index = 0;
+                    }
+                } else {
+                    index = ((rm_val as i32) >> shift_imm) as u32;
+                }
+            }
+            else if shift == 0b11 {       
+                if shift_imm == 0 {
+                    let c_flag = if cpu.get_flag(Flag::C) {1} else {0};
+                    index = (c_flag << 31) | (rm_val >> 1); 
+                } else {
+                    index = rm_val.rotate_right(shift_imm);
+                }
+            }
+            else {
+                panic!("OH SHIT! CHECK ADDMODE2 SCALED POST");
+            }
+
+            if cpu.pass_condition(opcode) {
+                if u_flag != 0 {
+                    cpu.register[cpu.idx[rn as usize]] = rn_val + index;
+                } else {
+                    cpu.register[cpu.idx[rn as usize]] = rn_val - index;
+                }
+            }
         },
         
         ModeEncoding::Undefined => {
