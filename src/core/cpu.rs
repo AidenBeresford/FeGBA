@@ -11,9 +11,9 @@ pub struct ARM7TDMI {
     // low regs are 0-7 inclusive
     // usr/sys high general-purpose regs are 8-12 inclusive
     // fiq high general-purpose regs are 20-24 inclusive
-    register: [u32; 37],
-    idx: [usize; 17], // this array is of indexes for register
-    spsr: usize, // spsr access in user/system is UB
+    pub register: [u32; 37],
+    pub idx: [usize; 17], // this array is of indexes for register
+    pub spsr: usize, // spsr access in user/system is UB
 }
 
 impl Default for ARM7TDMI {
