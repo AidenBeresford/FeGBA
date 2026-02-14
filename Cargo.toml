@@ -3,6 +3,12 @@ name = "fegba"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+
+[lib]
+name = "fegba"
+path = "src/lib.rs"
+
+[[bin]]
+name = "gba_emu"
+path = "src/main.rs"
